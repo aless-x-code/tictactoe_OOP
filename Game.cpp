@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "Game.h"
 
@@ -15,10 +16,39 @@ Game::~Game() // deconstructor
 {
 }
 
+const bool Game::is_not_equal(char &element, char &input) const {
+    return element == input;
+}
+
+const char Game::valid_cell(void) const
+{
+    string test_input = "";
+    while (true)
+    {
+        // while input is NOT a single character, ask for new input
+        while (getline(cin, test_input) && (test_input.length() == 0 || test_input.length() > 1))
+        {
+            cout << "Not a valid cell, try again: ";
+        }
+        // once input is a single char, check if input is NOT appropiate cell number
+        if (test_input[0] != '1' && test_input[0] != '2' && test_input[0] != '3' && test_input[0] != '4' && test_input[0] != '5' && test_input[0] != '6' && test_input[0] != '7' && test_input[0] != '8' && test_input[0] != '9')
+        {
+            cout << "Not a valid cell, try again: "; // not valid input, restart loop
+        }
+        // if input is an appropiate cell number, check if cell is already occupied
+        else if (!(none_of(cells_occupied.begin(), cells_occupied.end(), [&](char element) { return is_not_equal(element, test_input[0]); })))
+        {
+            cout << "Cell already occupied, try again: "; // if occupied, restart loop
+        }
+        else // else, valid input, return
+            return test_input[0];
+    }
+}
+
 // this is the function that conduct the bulk of the operation.
 const int Game::run_game(void)
 {
-    int play_game = 1;    // variable instructor while loop below to continue running games
+    int play_game = 1;    // variable triggers while loop below to continue running games
     
     while (play_game == 1) // while loop continues running tic tac toe games until users instructs otherwise
     {
@@ -51,7 +81,7 @@ const int Game::run_game(void)
         
         for (int i = 1; i < 6; i++) // loop while the number of round is less than 6. Since tictactoe's grid is has 9 square, and player alternate marks, a user has a maximum of 5 marks, thus, we exit loop and end current game if the number of turns reaches 5
         {
-        
+            
             cout << "--Round number: " << rounds << "------------" << endl; // outputs the current round number
             
             for (int j = 0; j <= 1; j++) // loop alternate game functions between player1 and player2 in each round
@@ -59,7 +89,15 @@ const int Game::run_game(void)
                 
                 // output player's username with the access operator for the pointer, also reminding the user what symbol (X or O) they were assigned
                 cout << "Player " <<  players_Ptr[j]->get_username() << " (" << players_Ptr[j]->get_game_symbol() << ")"<< ", select cell number: ";
-                cin >> cell; // input cell choosing from the grid
+                
+                
+                //__________________________________________________________________
+                // cin >> cell;
+                cell = valid_cell(); // call function, ask for cin, and check cin validity
+                cells_occupied.push_back(cell); // if valid cell number, add it to occupied cells
+                // __________________________________________________________________
+    
+                
                 tick_grid(cell, *players_Ptr[j]); // scratch grid
                 print_grid(); // print grid
                 
@@ -70,7 +108,7 @@ const int Game::run_game(void)
                     players_Ptr[j]->assing_win(); // assign winner a victory to their object
                     
                     // ask if user want to play another game
-                    if (restart_game() == 'Y') // if restart_game is 'Y', we run another game
+                    if (restart_game() == 'Y' || restart_game() == 'y') // if restart_game is 'Y', we run another game
                     {
                         i += 6; // we must exit the current game's loop, so we add 6 to i to negate the condition and exit
                         j += 2; // we must exit the loop that alternates between the two player within a round, so we add 2 to j to negate the condition and exit
@@ -78,17 +116,17 @@ const int Game::run_game(void)
                     else // if player doesn't want to play another game, exit
                         return 0;
                 } // end of check_win()
-            
+                
             } // end of loop that alternate game functions between player1 and player2 in each round
             
             rounds++; // increase round count by 1
             
-            // check for no winner / tie
+            // check for tie / board is full
             if (rounds == 6) // Max number of rounds is 6. Since tictactoe's grid is has 9 square, and player alternate marks, a user has a maximum of 6 marks, thus, we exit loop and end current game if the number of turns reaches 6
             {
                 cout << "____! Nobody Won !____" << endl << endl;
                 
-                if (restart_game() == 'Y') // ask user to play another game?
+                if (restart_game() == 'Y' || restart_game() == 'y') // ask user to play another game?
                     play_game = 1;
                 else
                     return 0;
@@ -112,7 +150,7 @@ void Game::print_grid(void) const
 }
 
 // function marks/tick an X or O in the grid. Function receives constant address of cell(user instruction of what cell to mark), and constant pointer object address
-void Game::tick_grid(const char &cell, const Player &current_player_Ptr)
+void Game::tick_grid(char &cell, const Player &current_player_Ptr)
 {
     switch (cell) {
         case '1':
@@ -162,7 +200,7 @@ const int Game::check_win(const Player &current_player_Ptr) const
     // diagonal
     if (grid[0][0] == c && grid[1][1] == c && grid[2][2] == c) return 1;
     if (grid[0][2] == c && grid[1][1] == c && grid[2][0] == c) return 1;
-
+    
     
     return 0;
 }
